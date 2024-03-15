@@ -1,0 +1,250 @@
+<!-- 总结更新2023.2.13
+实际在对矩阵方块进行赋值时，可先根据矩阵大小建立一个数组，通过循环将随机数赋入，进行对方块值的初始化
+避免cannot find 变量 -->
+
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="utf-8">
+  <title>数字记忆小游戏</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      -webkit-box-sizing: border-box;
+    }
+
+    /* @media screen and (max-width:1500px){
+                span{
+                    visibility:hidden;
+                }
+            } */
+    @keyframes backccol {
+      50% {
+        background-color: rgb(78, 78, 76);
+      }
+
+      100% {
+        background-color: rgb(250, 250, 250);
+      }
+    }
+
+    @-webkit-keyframes backccol {
+      50% {
+        background-color: rgb(78, 78, 76);
+      }
+
+      100% {
+        background-color: rgb(235, 235, 235);
+      }
+    }
+
+    body {
+      background-color: rgb(185, 184, 184);
+      animation: backccol 15s infinite;
+      -webkit-animation: backccol 15s infinite alternate;
+      padding: 20px;
+    }
+
+    span {
+      color: rgb(5, 80, 43);
+      font-size: 3.4em;
+      margin: 0;
+
+    }
+
+    .unit {
+      float: left;
+      /* display:inline-block; */
+      background-color: rgb(230, 197, 109);
+      width: 80px;
+      height: 80px;
+      margin: 10px;
+      padding: 0;
+      text-align: center;
+    }
+
+    .row {
+      /* background-color: rgb(240, 220, 220);; */
+      display: -webkit-flex;
+      display: flex;
+      height: 100px;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>
+    点击重置生成数字
+    点击开始隐藏数字
+  </h1>
+  <h2>请按数字顺序点击方块</h2>
+  <p>格子数量：
+    <select id="row">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+    </select>
+    x
+    <select id="col">
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+
+    <button onclick="gamestart()">重置</button>
+    <button onclick="start()">开始</button>
+  </p>
+  <div id="gameRegion">
+    <div id="game"></div>
+    <!-- <div class="row" id="name">请按顺序点击方块</div> -->
+  </div>
+
+  <script>
+    var counter = 0; //计数器
+    var row = 0;
+    var col = 0; //初始化行列数
+    var gameArray = new Array; //格子矩阵
+    var gameRow = new Array; //每一行组成的数组
+    var numberArray = new Array; //数字span组成的数组
+    var rowN = 0;
+    var numberDiv = new Array();
+
+    //定义一个计数器,flag为0时+1，flag为1时归零
+    var add = function(pls, flag) {
+      var counter = 0;
+      return function(pls, flag) {
+        if (flag == 1) {
+          console.clear();
+          return counter = 0;
+        }
+        return counter += pls;
+      }
+    }();
+
+    //开始函数，点击开始后隐藏数字
+    function start() {
+      for (let d of numberDiv) {
+        d.style.visibility = "hidden";
+      }
+    }
+
+    //-----重置按钮，初始化游戏界面-------
+    function gamestart() {
+      // if(row!=0){
+      //     for(const oldRow of game.children){
+      //         oldRow.remove();
+      //     }
+      // }
+      add(0, 1);
+      var gameOld = document.getElementById("game"); //便于后续插入矩阵
+      gameOld.remove();
+      var game = document.createElement("div");
+      game.id = "game";
+      var gameRegion = document.getElementById("gameRegion");
+      gameRegion.append(game);
+
+      row = document.getElementById("row").value;
+      col = document.getElementById("col").value; //获取行列号
+      gameArray.length = row;
+      numberArray.length = row;
+      rowN = row;
+      if (row > 3) {
+        rowN = rowN - 2;
+      }
+      var numberChan = new Array(col * rowN);
+      for (let x = 0; x < col * rowN; x++) {
+        numberChan[x] = x + 1;
+      } //产生用于显示的数字序列
+      for (let i = 0; i < row; i++) {
+        gameRow[i] = document.createElement("div");
+        game.appendChild(gameRow[i]);
+        gameRow[i].className = "row"; //矩阵行设置 b 
+        numberArray[i] = new Array(col);
+        gameArray[i] = new Array(col);
+        for (let j = 0; j < col; j++) {
+
+          gameArray[i][j] = document.createElement("div");
+          gameArray[i][j].className = "unit";
+          gameRow[i].appendChild(gameArray[i][j]); //矩阵方块加入
+          numberArray[i][j] = document.createElement("span");
+          gameArray[i][j].appendChild(numberArray[i][j]); //矩阵单元中span数字设置
+          giveValue(numberChan, numberArray[i][j]);
+        }
+      }
+      // 如果在矩阵全部循环完毕，数字链中的数字还未完全分配，则进行再次循环，直至所有数字被分配
+      while (numberChan.length > 0) {
+        console.log("second");
+        end: for (let i = 0; i < row; i++) {
+          for (let j = 0; j < col; j++) {
+            let textij = gameArray[i][j].textContent;
+            if (!textij) {
+              giveValue(numberChan, numberArray[i][j]);
+            }
+            if (numberChan.length === 0) {
+              break end;
+            }
+          }
+        }
+      }
+
+      //每个方块添加点击后的函数；
+      var unit = Array.from(document.querySelectorAll(".unit"));
+      unit.forEach(ele => {
+        ele.addEventListener("click", checkValue);
+      })
+
+    }
+
+    //检验点击次序与数字是否对应
+    function checkValue() {
+      var ord = add(1, 0);
+      console.log(this.textContent);
+      console.log(ord);
+      if (ord == this.textContent) {
+        this.children[0].style.visibility = "visible";
+      } else {
+        ord = add(-1);
+        this.style.backgroundColor = "rgb(255,0,0)";
+      }
+
+    }
+
+    //方块赋值函数
+    function giveValue(numberChan, number) {
+      let p = Math.random() * row;
+      if ((p < rowN) && (numberChan.length > 0)) {
+        console.log(numberChan.length);
+        let rand = Math.floor(Math.random() * numberChan.length);
+        console.log(numberChan[rand]);
+        number.innerHTML = numberChan[rand];
+        for (let s = rand; s < numberChan.length; s++) {
+          numberChan[s] = numberChan[s + 1];
+        }
+        numberChan.pop();
+        numberDiv.push(number);
+      } else {
+        number.innerHTML = "";
+      }
+    }
+  </script>
+</body>
+
+</html>

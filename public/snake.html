@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>贪吃蛇</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+
+    .game {
+      width: 800px;
+      height: 800px;
+      border: black solid 5px;
+      border-radius: 20px;
+      background-color: rgb(169, 180, 192);
+      margin: 10px auto;
+    }
+
+    #stage {
+      width: 726px;
+      height: 606px;
+      border: black solid 3px;
+      margin: 40px auto;
+      position: relative;
+    }
+
+    .message {
+      width: 80%;
+      display: flex;
+      justify-content: space-between;
+      margin: 10px auto;
+      font-size: 1.5em;
+      font-weight: bolder;
+    }
+
+    .apple {
+      width: 10px;
+      height: 10px;
+      position: absolute;
+      /* background-color: black; */
+      border: solid black 4px;
+      border-radius: 50%;
+      left: 30px;
+      top: 50px;
+    }
+
+    .snake div {
+      width: 10px;
+      height: 10px;
+      position: absolute;
+      background-color: black;
+      border: rgb(61, 55, 55) solid 1px;
+
+    }
+
+    .snake .head {
+      /* border:black dotted 1px; */
+      background-color: white;
+    }
+
+    h1 {
+      /* text-align: center; */
+      /* margin:10px 50px 0 auto; */
+      display: inline-block;
+    }
+
+    .hard {
+      /* width:800px; */
+      /* margin:0 50px; */
+      font-size: 1.5em;
+      display: inline-block;
+    }
+
+    .title {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px auto;
+      width: 800px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="title">
+    <h1>贪吃蛇大冒险</h1>
+    <div class="hard">
+      选择难度：<select id="hardmode">
+        <option value="500">easy</option>
+        <option value="300">normal</option>
+        <option value="100">hard</option>
+      </select>
+      <button id="conHard">确认</button>
+    </div>
+  </div>
+  <div class="game">
+
+    <div id="stage">
+      <div class="apple"></div>
+      <div class="snake">
+        <div class="head"></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="message">
+      <div>
+        SCORE:<span class="score">0</span>
+      </div>
+      <div>
+        LEVEL:<span class="level">1</span>
+      </div>
+    </div>
+
+  </div>
+
+
+
+  <script>
+    //定义坐标类，实现坐标操作
+    class Coordinate {
+      constructor(top, left) {
+        this.top = top,
+          this.left = left
+      }
+      set(x, y) {
+        this.top = x;
+        this.left = y;
+        return this;
+      }
+      plus(x) {
+        this.top += x.top;
+        this.left += x.left;
+      }
+      toString() {
+        this.top = this.top + "px";
+        this.left = this.left + "px";
+        return this;
+      }
+      anchoring(div) { //将传入元素的锚定在当前坐标
+        // div.style.top=this.top+"px";
+        // div.style.left=this.left+"px";
+        ({
+          top: div.style.top,
+          left: div.style.left
+        } = this.toString())
+      }
+      valueof() {
+        return "" + this.top + this.left;
+      }
+      static position(div, x, y) { //设置div的位置
+        div.style.top = x + "px";
+        div.style.left = y + "px";
+        // console.log(div.style.top,div.style.left,div.className);
+      }
+      static getPosition(div) { //返回一个传入元素位置的Coordinate对象
+        return new Coordinate(div.offsetTop, div.offsetLeft);
+      }
+
+    }
+
+    let hardmode = 200;
+    let score = document.querySelector(".score");
+    let level = document.querySelector(".level");
+    let snakes = document.querySelector(".snake");
+    let snake = Array.from(document.querySelectorAll(".snake div"));
+    let stage = document.getElementById("stage");
+    let apple = document.querySelector(".apple");
+    //获取stage大小、头部坐标
+    let stageStyle = document.defaultView.getComputedStyle(stage, null);
+    let self = new Array();
+    let keydown = false;
+    let timer = null;
+    initialize(); //初始化
+    let head = document.querySelector(".head");
+
+    let headCo = new Coordinate(head.offsetTop, head.offsetLeft);
+    console.log(headCo.valueof());
+    let DirPace = new Coordinate(0, 0);
+
+
+    //为 ↑ ↓ ← →键添加动作指令
+
+
+    document.addEventListener("keydown", (event) => {
+      console.log(event.key);
+      // if(timer)clearInterval(timer);
+      //根据键位判定方向
+      keydown = event.key;
+      switch (event.key) {
+        case "ArrowDown":
+          DirPace.set(10, 0);
+          break;
+        case "ArrowUp":
+          DirPace.set(-10, 0);
+          break;
+        case "ArrowLeft":
+          DirPace.set(0, -10);
+          break;
+        case "ArrowRight":
+          DirPace.set(0, 10);
+          break;
+        default:
+          keydown = false;
+          break;
+      }
+
+    }, false);
+    timer = setInterval(() => {
+      // console.log(head.style.top,head.style.left);
+      if (keydown) snakeAction(DirPace);
+    }, hardmode);
+
+
+    //获取一下难度
+    let conHard = document.getElementById("conHard");
+    conHard.addEventListener("click", () => {
+      hardmode = document.getElementById("hardmode").value;
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        // console.log(head.style.top,head.style.left);
+        if (keydown) snakeAction(DirPace);
+      }, hardmode);
+    }, false);
+
+    //初始化
+    function initialize() {
+      let j = snake.length - 1;
+      self = []
+      while (j > 3) {
+        snakes.removeChild(snake[j]);
+        snake.pop();
+        j--;
+      }
+      for (let i = 0; i < snake.length; i++) {
+        Coordinate.position(snake[snake.length - 1 - i], 0, 10 * i);
+        self.unshift((Coordinate.getPosition(snake[snake.length - 1 - i])));
+      }
+      appleCo();
+      score.innerHTML = 0;
+      level.innerHTML = 1;
+      keydown = false;
+    }
+
+    //获取随机苹果位置
+    function appleCo() {
+      apple.style.top = Math.floor(Math.random() * (parseInt(stageStyle.height) / 10 - 1)) * 10 + "px";
+      apple.style.left = Math.floor(Math.random() * (parseInt(stageStyle.width) / 10 - 1)) * 10 + "px";
+      console.log("apple", apple.style.top, apple.style.left);
+    }
+
+    //步进函数 根据传入的方向移动
+    function snakeAction(DirPace) {
+      //获取head的位置并模拟下一步的坐标
+      headCo.set(head.offsetTop, head.offsetLeft)
+      headCo.plus(DirPace);
+      console.log("下一步", headCo.valueof());
+      console.log("碰到的节", self.find((ele) => ele.valueof() === headCo.valueof()))
+      console.log(self.length);
+      console.log(self.indexOf(self.find((ele) => ele.valueof() === headCo.valueof())))
+      //若坐标超出stage范围则停止timer
+      if (headCo.top < 0 || headCo.top > parseInt(stageStyle.height) - 10 ||
+        headCo.left < 0 || headCo.left > parseInt(stageStyle.width) - 10) {
+        console.log("碰壁");
+        gameEnd();
+        return;
+      } else if (self.find((ele) => ele.valueof() === headCo.valueof())) {
+        if (self.find((ele) => ele.valueof() === headCo.valueof()) !== self[self.length - 1]) {
+          console.log("自尽");
+          gameEnd();
+          return;
+        }
+      }
+      if (headCo.top == apple.offsetTop &&
+        headCo.left == apple.offsetLeft) { //若吃到苹果则前进后增加一节
+        head.classList.remove("head");
+        head = document.createElement("div");
+        snakes.appendChild(head);
+        newHead();
+        appleCo();
+        score.innerHTML++;
+        level.innerHTML = Math.floor(Math.sqrt(score.innerHTML));
+      } else { //else则前进
+        head.classList.remove("head");
+        head = snake.pop();
+        newHead();
+        self.pop();
+      }
+    }
+
+    function newHead() {
+      head.classList.add("head");
+      headCo.anchoring(head);
+      snake.unshift(head);
+      self.unshift(Coordinate.getPosition(head));
+    }
+
+    function gameEnd() {
+      // clearInterval(timer);
+      alert("GAMEOVER");
+      initialize();
+    }
+  </script>
+</body>
+
+</html>

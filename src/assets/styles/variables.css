@@ -1,0 +1,19 @@
+html {
+    /* --primary-color: rgb(255, 246, 238); */
+    /* --primary-color: rgb(43, 133, 85); */
+    --primary-color: rgb(56, 110, 45);
+    /* --top-nav-color:rgb(162, 236, 255); */
+    --top-nav-color:#fff;
+    --top-nav-height: 80px;
+    --font-color-light: #fff;
+    --font-color-dark: #333;
+    --logo-distance: 3rem;
+    --nav-left: 300px;
+}
+
+
+@media screen and (min-height:800px){
+    html{
+        --top-nav-height: 10vh;
+    }
+}
